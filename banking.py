@@ -98,72 +98,75 @@ while True:
             id_num = len(c.fetchall()) + 1
             values = (id_num, num_generator(), pin_generator())
             cards[values[1]] = {'pin': values[2], 'balance': 0}
-            c.execute("INSERT INTO card (id, number, pin) VALUES (?, ?, ?)", values)
+            c.execute("INSERT INTO card (id, number, pin) VALUES (?, ?, ?)", values,)
             conn.commit()
             print(create_message.format(num=card_num, pinn=pin))
         # log in
         elif a == 2:
-            enter_num = input('Enter your card number:\n')
-            enter_pin = input('Enter your PIN:\n')
-            if (enter_num in cards) and (enter_pin == cards[str(enter_num)]['pin']):
+            enter_num = str(input('Enter your card number:\n'))
+            enter_pin = str(input('Enter your PIN:\n'))
+            if (enter_num in cards) and (enter_pin == cards[enter_num]['pin']):
                 main = False
                 print('You have successfully logged in!\n')
                 continue
             else:
                 print('Wrong card number or PIN!\n')
         # exit
-        else:
+        elif a == 0:
             print('Bye!')
             break
 
-            # menu after login
-    else:
-        print(menu_log, '\n')
+        else:
+            print('Please, enter a valid command.')
+    else: # menu after login
+        print(menu_log)
         a = int(input())
-        if a == 1:
-            print('Balance: ', cards[str(enter_num)]['balance'], '\n')
-        elif a == 2:
+        if a == 1: # Balance
+            print('Balance: ' + str(cards[enter_num]['balance']))
+        elif a == 2: # Add income
             income = int(input('Enter income:\n'))
             cards[enter_num]['balance'] += income
             tupl_income = (income, enter_num)
             c.execute("UPDATE card SET balance = balance + ? WHERE number = ? ", tupl_income)
             conn.commit()
             print('Income was added!\n')
-        elif a == 3:
+        elif a == 3: # Do transfer
             print('Enter card number:')
-            rcvr = input()
+            rcvr = str(input())
             if luhn(rcvr):
                 if rcvr in cards:
-                    if rcvr == enter_num: print('You can\'t transfer money to the same account!')
-                    print('Enter how much money you want to transfer:')
-                    amount = int(input())
-                    if amount <= cards[enter_num]['balance']:
-                        cards[enter_num]['balance'] -= amount
-                        cards[rcvr]['balance'] += amount
-                        tupl_sender = (amount, enter_num)
-                        tupl_rcvr = (amount, rcvr)
-                        c.execute("UPDATE card SET balance = balance - ? WHERE number = ? ", tupl_sender)
-                        conn.commit()
-                        c.execute("UPDATE card SET balance = balance + ? WHERE number = ? ", tupl_rcvr)
-                        conn.commit()
-                        print('Success!\n')
+                    if rcvr == enter_num:
+                        print('You can\'t transfer money to the same account!')
                     else:
-                        print('Not enough money!\n')
+                        print('Enter how much money you want to transfer:')
+                        amount = int(input())
+                        if amount <= cards[enter_num]['balance']:
+                            cards[enter_num]['balance'] -= amount
+                            cards[rcvr]['balance'] += amount
+                            tupl_sender = (amount, enter_num)
+                            tupl_rcvr = (amount, rcvr)
+                            c.execute("UPDATE card SET balance = balance - ? WHERE number = ? ", tupl_sender)
+                            conn.commit()
+                            c.execute("UPDATE card SET balance = balance + ? WHERE number = ? ", tupl_rcvr)
+                            conn.commit()
+                            print('Success!\n')
+                        else:
+                            print('Not enough money!\n')
                 else:
                     print('Such a card does not exist.\n')
             else:
                 print('Probably you made a mistake in the card number. Please try again!\n')
-        elif a == 4:
+        elif a == 4: # Close account
             tupl = (enter_num,)
             c.execute("DELETE FROM card WHERE number=?", tupl)
             conn.commit()
             cards.pop(enter_num)
             print('The account has been closed!\n')
             main = True
-        elif a == 5:
+        elif a == 5: # log out
             print('You have successfully logged out!\n')
             main = True
-        else:
+        else: # exit
             print('Bye!')
             break
     card_num = '400000'
